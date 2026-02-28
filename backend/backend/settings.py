@@ -124,12 +124,13 @@ SIMPLE_JWT = {
 }
 
 # ──────────────────────────────────────────────
-# CORS
+# CORS 
 # ──────────────────────────────────────────────
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:5173",
+    "http://d082-2c0f-6300-d09-fd00-ecf6-3cb3-9e9c-6b3c.ngrok-free.app",
     os.environ.get('FRONTEND_URL', 'https://phoneplacekenya.com'),
 ]
 CORS_ALLOW_CREDENTIALS = True
@@ -158,7 +159,7 @@ MPESA_CONSUMER_KEY = os.environ.get('MPESA_CONSUMER_KEY', '')
 MPESA_CONSUMER_SECRET = os.environ.get('MPESA_CONSUMER_SECRET', '')
 MPESA_SHORTCODE = os.environ.get('MPESA_SHORTCODE', '174379')       # Sandbox default
 MPESA_PASSKEY = os.environ.get('MPESA_PASSKEY', '')
-MPESA_CALLBACK_URL = os.environ.get('MPESA_CALLBACK_URL', 'https://yoursite.com/api/v1/mpesa/callback/')
+MPESA_CALLBACK_URL = os.environ.get('MPESA_CALLBACK_URL', 'http://d082-2c0f-6300-d09-fd00-ecf6-3cb3-9e9c-6b3c.ngrok-free.app/api/v1/mpesa/callback/')
 MPESA_BASE_URL = 'https://sandbox.safaricom.co.ke'                 # Change to live for production
 
 # ──────────────────────────────────────────────
