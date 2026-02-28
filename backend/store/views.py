@@ -302,12 +302,37 @@ class MpesaSTKPushView(APIView):
     def _get_access_token(self):
         consumer_key = settings.MPESA_CONSUMER_KEY
         consumer_secret = settings.MPESA_CONSUMER_SECRET
+
+        if not consumer_key or not consumer_secret:
+            raise ValueError(
+                "MPESA_CONSUMER_KEY or MPESA_CONSUMER_SECRET is empty. "
+                "Check your .env file and that load_dotenv() is called in settings.py."
+            )
+
         auth = base64.b64encode(f"{consumer_key}:{consumer_secret}".encode()).decode()
-        r = requests.get(
-            f"{settings.MPESA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials",
-            headers={"Authorization": f"Basic {auth}"}
-        )
-        return r.json().get('access_token')
+
+        try:
+            r = requests.get(
+                f"{settings.MPESA_BASE_URL}/oauth/v1/generate?grant_type=client_credentials",
+                headers={"Authorization": f"Basic {auth}"},
+                timeout=30,
+            )
+            r.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"M-Pesa OAuth network error: {e}")
+
+        if not r.text.strip():
+            raise ValueError(
+                f"Empty response from M-Pesa OAuth (HTTP {r.status_code}). "
+                "Wrong credentials or base URL."
+            )
+
+        data = r.json()
+        token = data.get('access_token')
+        if not token:
+            raise ValueError(f"No access_token in M-Pesa response: {data}")
+
+        return token
 
     def post(self, request):
         serializer = MpesaSTKPushSerializer(data=request.data)
