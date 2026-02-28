@@ -9,6 +9,13 @@ function getHeaders() {
   };
 }
 
+/** Normalize DRF paginated or plain responses to always return an array */
+function toArray(data) {
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.results)) return data.results;
+  return [];
+}
+
 async function request(endpoint, options = {}) {
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
@@ -16,7 +23,6 @@ async function request(endpoint, options = {}) {
   });
 
   if (res.status === 401) {
-    // Try refresh
     const refreshed = await refreshToken();
     if (refreshed) {
       const retry = await fetch(`${BASE_URL}${endpoint}`, {
@@ -71,27 +77,27 @@ const api = {
   getProfile: () => api.get('/auth/profile/'),
   updateProfile: (data) => api.patch('/auth/profile/', data),
 
-  // Products
+  // Products — list endpoints return arrays, detail endpoints return objects
   getProducts: (params = '') => api.get(`/products/${params}`),
   getProduct: (slug) => api.get(`/products/${slug}/`),
-  getRelated: (slug) => api.get(`/products/${slug}/related/`),
-  getFeatured: () => api.get('/products/featured/'),
-  getBestSellers: () => api.get('/products/best_sellers/'),
-  getNewArrivals: () => api.get('/products/new_arrivals/'),
-  getByCategory: (slug) => api.get(`/products/by_category/?slug=${slug}`),
-  getByBrand: (slug) => api.get(`/products/by_brand/?slug=${slug}`),
+  getRelated: (slug) => api.get(`/products/${slug}/related/`).then(toArray),
+  getFeatured: () => api.get('/products/featured/').then(toArray),
+  getBestSellers: () => api.get('/products/best_sellers/').then(toArray),
+  getNewArrivals: () => api.get('/products/new_arrivals/').then(toArray),
+  getByCategory: (slug) => api.get(`/products/by_category/?slug=${slug}`).then(toArray),
+  getByBrand: (slug) => api.get(`/products/by_brand/?slug=${slug}`).then(toArray),
   searchProducts: (q) => api.get(`/products/?search=${encodeURIComponent(q)}`),
 
-  // Categories & Brands
-  getCategories: () => api.get('/categories/'),
-  getBrands: () => api.get('/brands/'),
-  getFeaturedBrands: () => api.get('/brands/featured/'),
+  // Categories & Brands — always return arrays
+  getCategories: () => api.get('/categories/').then(toArray),
+  getBrands: () => api.get('/brands/').then(toArray),
+  getFeaturedBrands: () => api.get('/brands/featured/').then(toArray),
 
-  // Banners
-  getBanners: () => api.get('/banners/'),
-  getHeroBanners: () => api.get('/banners/hero/'),
+  // Banners — always return arrays
+  getBanners: () => api.get('/banners/').then(toArray),
+  getHeroBanners: () => api.get('/banners/hero/').then(toArray),
 
-  // Cart
+  // Cart — returns a single cart object, not an array
   getCart: () => api.get('/cart/'),
   addToCart: (data) => request('/cart/', { method: 'POST', body: JSON.stringify(data) }),
   updateCartItem: (data) => request('/cart/update_item/', { method: 'PATCH', body: JSON.stringify(data) }),
@@ -100,19 +106,19 @@ const api = {
 
   // Orders
   createOrder: (data) => api.post('/orders/', data),
-  getOrders: () => api.get('/orders/'),
+  getOrders: () => api.get('/orders/').then(toArray),
   getOrder: (id) => api.get(`/orders/${id}/`),
 
   // M-Pesa
   stkPush: (data) => api.post('/mpesa/stk-push/', data),
 
   // Wishlist
-  getWishlist: () => api.get('/wishlist/'),
+  getWishlist: () => api.get('/wishlist/').then(toArray),
   addToWishlist: (productId) => api.post('/wishlist/', { product_id: productId }),
   removeFromWishlist: (id) => api.delete(`/wishlist/${id}/`),
 
   // Recently Viewed
-  getRecentlyViewed: () => api.get('/recently-viewed/'),
+  getRecentlyViewed: () => api.get('/recently-viewed/').then(toArray),
 };
 
 export default api;
